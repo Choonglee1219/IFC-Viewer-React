@@ -26,6 +26,7 @@ export function ViewerProvider(props: {children: React.ReactNode}) {
 
 export function IFCViewer() {
   const { setViewer } = React.useContext(ViewerContext)
+  const ref = React.useRef<HTMLElement>(null)
   let viewer: OBC.Components
   const createViewer = async () => {
     viewer = new OBC.Components()
@@ -37,7 +38,7 @@ export function IFCViewer() {
     const scene = sceneComponent.get()
     scene.background = null
 
-    const viewerContainer = document.getElementById("viewer-container") as HTMLDivElement
+    const viewerContainer = ref.current as HTMLElement
     const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
     viewer.renderer = rendererComponent
 
@@ -226,9 +227,17 @@ export function IFCViewer() {
 
   React.useEffect(() => {
     createViewer()
+    const observer = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        viewer.renderer.resize()
+        window.resizeTo(500,500)
+      }
+    })
+    observer.observe(ref.current as Element)
     return () => {
       viewer.dispose()
       setViewer(null)
+      observer.disconnect()
     }
   }, [])
 
@@ -236,6 +245,7 @@ export function IFCViewer() {
     <div
       id="viewer-container"
       className="dashboard-card"
+      ref={ref}
       style={{ minWidth: 0, position: "relative" }}
     />
   )
