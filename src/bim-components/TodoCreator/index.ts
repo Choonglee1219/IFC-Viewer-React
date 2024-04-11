@@ -22,9 +22,9 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
   }>()
   private _components: OBC.Components
   private _list: ToDo[] = []
-  private setTodoList: (todo:ToDo) => void
+  private setTodoList: () => void
 
-  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: (todo:ToDo) => void) {
+  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: () => void) {
     super(components)
     this._components = components
     components.tools.add(TodoCreator.uuid, this)
@@ -71,7 +71,8 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
       priority
     }
 
-    this.setTodoList(todo)
+    this._list.push(todo)
+    this.setTodoList()
 
     const todoCard = new TodoCard(this._components)
     todoCard.description = todo.description

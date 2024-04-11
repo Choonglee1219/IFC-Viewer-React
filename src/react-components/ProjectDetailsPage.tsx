@@ -25,10 +25,8 @@ export function ProjectDetailsPage(props: Props) {
 
     
   }
-  const addTodo = (todo:ToDo) => {
-    setTodoList(todoList => {
-      return [...todoList, todo]
-    })
+  const addTodo = () => {
+    setTodoList([...todoList])
   }
   function moveCamera(event: MouseEvent, todo: ToDo) {
     event.defaultPrevented

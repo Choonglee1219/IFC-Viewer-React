@@ -26,7 +26,7 @@ export function ViewerProvider(props: {children: React.ReactNode}) {
 
 interface Iprops {
   todoList: ToDo[],
-  addTodo: (todo:ToDo) => void
+  addTodo: () => void
 }
 
 export function IFCViewer(prop : Iprops) {
