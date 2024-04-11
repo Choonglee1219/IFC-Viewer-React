@@ -71,7 +71,6 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
       priority
     }
 
-    this._list.push(todo)
     this.setTodoList(todo)
 
     const todoCard = new TodoCard(this._components)

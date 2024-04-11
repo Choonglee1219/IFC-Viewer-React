@@ -1,9 +1,11 @@
 import * as React from "react"
 import * as Router from "react-router-dom"
+import * as OBC from "openbim-components"
 import { ProjectsManager } from "../classes/ProjectsManager"
-import { IFCViewer } from "./IFCViewer"
+import { IFCViewer, ViewerContext } from "./IFCViewer"
 import { useState } from "react"
 import { ToDo } from "../bim-components/TodoCreator"
+import { TodoCard } from "../bim-components/TodoCreator/src/TodoCard"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -11,6 +13,7 @@ interface Props {
 
 export function ProjectDetailsPage(props: Props) {
   const routeParams = Router.useParams<{ id: string }>()
+  const {viewer} = React.useContext(ViewerContext)
   const [toggle, setToggle] = useState<boolean>(true)
   const [todoList, setTodoList] = useState<ToDo[]>([])
   if (!routeParams.id) {return (<p>Project ID is needed to see this page</p>)}
@@ -19,12 +22,30 @@ export function ProjectDetailsPage(props: Props) {
   
   function clickedTodoAdd(event: MouseEvent) {
     event.defaultPrevented
+
     
   }
   const addTodo = (todo:ToDo) => {
     setTodoList(todoList => {
       return [...todoList, todo]
     })
+  }
+  function moveCamera(event: MouseEvent, todo: ToDo) {
+    event.defaultPrevented
+    if(!viewer) {return}
+    const camera = viewer.camera
+    if (!(camera instanceof OBC.OrthoPerspectiveCamera)) {
+      throw new Error("TodoCreator needs the OrthoPerspectiveCamera in order to work")
+    }
+    camera.controls.setLookAt(
+      todo.camera.position.x,
+      todo.camera.position.y,
+      todo.camera.position.z,
+      todo.camera.target.x,
+      todo.camera.target.y,
+      todo.camera.target.z,
+      true
+    )
   }
 
   return (
@@ -163,8 +184,9 @@ export function ProjectDetailsPage(props: Props) {
               rowGap: 20
             }}
           >
+            
             {todoList.map((todo:ToDo, index:number) => {
-              return (<div className="todo-item" key={index}>
+              return (<div className="todo-item" key={index} onClick={(e) => moveCamera(e, todo)}>
               <div
                 style={{
                   display: "flex",
