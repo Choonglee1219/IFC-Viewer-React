@@ -229,8 +229,7 @@ export function IFCViewer() {
     createViewer()
     const observer = new ResizeObserver(entries => {
       for (let entry of entries) {
-        viewer.renderer.resize()
-        window.resizeTo(500,500)
+        window.dispatchEvent(new Event('resize'))
       }
     })
     observer.observe(ref.current as Element)
