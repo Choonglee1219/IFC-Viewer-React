@@ -4,7 +4,7 @@ import { TodoCard } from "./src/TodoCard"
 
 type ToDoPriority = "Low" | "Medium" | "High"
 
-interface ToDo {
+export interface ToDo {
   description: string
   date: Date
   fragmentMap: OBC.FragmentIdMap
@@ -22,12 +22,15 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
   }>()
   private _components: OBC.Components
   private _list: ToDo[] = []
+  private setTodoList: (todo:ToDo) => void
 
-  constructor(components: OBC.Components) {
+  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: (todo:ToDo) => void) {
     super(components)
     this._components = components
     components.tools.add(TodoCreator.uuid, this)
+    this._list = todoList
     this.setUI()
+    this.setTodoList = setTodoList
   }
 
   async dispose() {
@@ -69,6 +72,7 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
     }
 
     this._list.push(todo)
+    this.setTodoList(todo)
 
     const todoCard = new TodoCard(this._components)
     todoCard.description = todo.description

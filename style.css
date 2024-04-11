@@ -68,6 +68,12 @@ button:hover {
   background-color: var(--primary-400);
 }
 
+span:hover {
+  cursor: pointer;
+  background-color: #029AE0;
+  border-radius: 100px;
+}
+
 .page {
   display: flex;
   flex-direction: column;
@@ -284,5 +290,5 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   top: 0;
   left: 0;
-  background-color: var(--background-100);
+  background-color: var(--background-200);
 }

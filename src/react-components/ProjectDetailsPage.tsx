@@ -3,6 +3,7 @@ import * as Router from "react-router-dom"
 import { ProjectsManager } from "../classes/ProjectsManager"
 import { IFCViewer } from "./IFCViewer"
 import { useState } from "react"
+import { ToDo } from "../bim-components/TodoCreator"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -11,9 +12,21 @@ interface Props {
 export function ProjectDetailsPage(props: Props) {
   const routeParams = Router.useParams<{ id: string }>()
   const [toggle, setToggle] = useState<boolean>(true)
+  const [todoList, setTodoList] = useState<ToDo[]>([])
   if (!routeParams.id) {return (<p>Project ID is needed to see this page</p>)}
   const project = props.projectsManager.getProject(routeParams.id)
   if (!project) {return (<p>The project with ID {routeParams.id} wasn't found.</p>)}
+  
+  function clickedTodoAdd(event: MouseEvent) {
+    event.defaultPrevented
+    
+  }
+  const addTodo = (todo:ToDo) => {
+    setTodoList(todoList => {
+      return [...todoList, todo]
+    })
+  }
+
   return (
     <div className="page" id="project-details">
       <header>
@@ -139,7 +152,7 @@ export function ProjectDetailsPage(props: Props) {
                   style={{ width: "100%" }}
                 />
               </div>
-              <span className="material-icons-round">add</span>
+              <span className="material-icons-round" onClick={(event) => clickedTodoAdd(event)}>add</span>
             </div>
           </div>
           <div
@@ -150,7 +163,8 @@ export function ProjectDetailsPage(props: Props) {
               rowGap: 20
             }}
           >
-            <div className="todo-item">
+            {todoList.map((todo:ToDo, index:number) => {
+              return (<div className="todo-item" key={index}>
               <div
                 style={{
                   display: "flex",
@@ -171,17 +185,18 @@ export function ProjectDetailsPage(props: Props) {
                   >
                     construction
                   </span>
-                  <p>Make anything here as you want, even something longer.</p>
+                  <p>{todo.description}</p>
                 </div>
-                <p style={{ marginLeft: 10 }}>Fri, 20 sep</p>
+                <p style={{ marginLeft: 10 }}>{todo.date.toDateString()}</p>
               </div>
-            </div>
+            </div>)
+            })}
           </div>
         </div>
       </div>
         : 
-        <></>}
-        <IFCViewer />
+      <></>}
+      <IFCViewer todoList={todoList} addTodo={addTodo}/>
       </div>
     </div>
   )

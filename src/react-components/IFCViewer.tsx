@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as OBC from "openbim-components"
 import { FragmentsGroup } from "bim-fragment"
-import { TodoCreator } from "../bim-components/TodoCreator"
+import { TodoCreator, ToDo } from "../bim-components/TodoCreator"
 import { SimpleQto } from "../bim-components/SimpleQto"
 import { GUI } from 'dat.gui'
 
@@ -24,7 +24,12 @@ export function ViewerProvider(props: {children: React.ReactNode}) {
   )
 }
 
-export function IFCViewer() {
+interface Iprops {
+  todoList: ToDo[],
+  addTodo: (todo:ToDo) => void
+}
+
+export function IFCViewer(prop : Iprops) {
   const { setViewer } = React.useContext(ViewerContext)
   const ref = React.useRef<HTMLElement>(null)
   let viewer: OBC.Components
@@ -204,7 +209,7 @@ export function IFCViewer() {
       highlighter.highlightByID("select", fragmentIdMap)
     })
 
-    const todoCreator = new TodoCreator(viewer)
+    const todoCreator = new TodoCreator(viewer, prop.todoList, prop.addTodo)
     await todoCreator.setup()
 
     const simpleQto = new SimpleQto(viewer)
