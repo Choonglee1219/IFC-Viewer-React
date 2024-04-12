@@ -28,7 +28,7 @@ export function ProjectDetailsPage(props: Props) {
   const addTodo = () => {
     setTodoList([...todoList])
   }
-  function moveCamera(event: MouseEvent, todo: ToDo) {
+  async function clickedTodo(event: MouseEvent, todo: ToDo) {
     event.defaultPrevented
     if(!viewer) {return}
     const camera = viewer.camera
@@ -44,6 +44,10 @@ export function ProjectDetailsPage(props: Props) {
       todo.camera.target.z,
       true
     )
+    const highlighter = await viewer.tools.get(OBC.FragmentHighlighter)
+    const fragmentMapLength = Object.keys(todo.fragmentMap).length
+    if (fragmentMapLength === 0) {return}
+    highlighter.highlightByID("select", todo.fragmentMap)
   }
 
   return (
@@ -59,8 +63,8 @@ export function ProjectDetailsPage(props: Props) {
           {toggle ? "hide" : "show"}
         </div>
         {toggle ? 
-        <div style={{ display: "flex", flexDirection: "column", rowGap: 30 }}>
-        <div className="dashboard-card" style={{ padding: "30px 0" }}>
+        <div style={{ display: "flex", flexDirection: "column", rowGap: 30, height: "100%" }}>
+        <div className="dashboard-card" style={{ padding: "30px 0"}}>
           <div
             style={{
               display: "flex",
@@ -143,13 +147,14 @@ export function ProjectDetailsPage(props: Props) {
             </div>
           </div>
         </div>
-        <div className="dashboard-card" style={{ flexGrow: 1 }}>
+        <div className="dashboard-card" style={{ flexGrow: 1}}>
           <div
             style={{
               padding: "20px 30px",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between"
+              justifyContent: "space-between",
+              height: "20%"
             }}
           >
             <h4>To-Do</h4>
@@ -174,17 +179,9 @@ export function ProjectDetailsPage(props: Props) {
               <span className="material-icons-round" onClick={(event) => clickedTodoAdd(event)}>add</span>
             </div>
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              padding: "10px 30px",
-              rowGap: 20
-            }}
-          >
-            
+          <div className="todo-card-container">
             {todoList.map((todo:ToDo, index:number) => {
-              return (<div className="todo-item" key={index} onClick={(e) => moveCamera(e, todo)}>
+              return (<div className="todo-item" key={index} onClick={(e) => clickedTodo(e, todo)}>
               <div
                 style={{
                   display: "flex",
