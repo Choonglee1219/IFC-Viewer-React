@@ -4,8 +4,7 @@ import * as OBC from "openbim-components"
 import { ProjectsManager } from "../classes/ProjectsManager"
 import { IFCViewer, ViewerContext } from "./IFCViewer"
 import { useState } from "react"
-import { ToDo } from "../bim-components/TodoCreator"
-import { TodoCard } from "../bim-components/TodoCreator/src/TodoCard"
+import { ToDo, TodoCreator } from "../bim-components/TodoCreator"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -16,6 +15,7 @@ export function ProjectDetailsPage(props: Props) {
   const {viewer} = React.useContext(ViewerContext)
   const [toggle, setToggle] = useState<boolean>(true)
   const [todoList, setTodoList] = useState<ToDo[]>([])
+  const [colorize, setColorize] = useState<boolean>(false)
   if (!routeParams.id) {return (<p>Project ID is needed to see this page</p>)}
   const project = props.projectsManager.getProject(routeParams.id)
   if (!project) {return (<p>The project with ID {routeParams.id} wasn't found.</p>)}
@@ -25,9 +25,11 @@ export function ProjectDetailsPage(props: Props) {
 
     
   }
+
   const addTodo = () => {
     setTodoList([...todoList])
   }
+
   async function clickedTodo(event: MouseEvent, todo: ToDo) {
     event.defaultPrevented
     if(!viewer) {return}
@@ -50,6 +52,25 @@ export function ProjectDetailsPage(props: Props) {
     highlighter.highlightByID("select", todo.fragmentMap)
   }
 
+  async function clickedColorize(event: MouseEvent) {
+    event.defaultPrevented
+    if(!viewer) {return}
+    const highlighter = await viewer.tools.get(OBC.FragmentHighlighter)
+    if(colorize) {
+      setColorize(!colorize)
+      highlighter.clear(`${TodoCreator.uuid}-priority-Low`) 
+      highlighter.clear(`${TodoCreator.uuid}-priority-Normal`) 
+      highlighter.clear(`${TodoCreator.uuid}-priority-High`)
+    } else {
+      setColorize(!colorize)
+      for (const todo of todoList) {
+        const fragmentMapLength = Object.keys(todo.fragmentMap).length
+        if (fragmentMapLength === 0) {return}
+        highlighter.highlightByID(`${TodoCreator.uuid}-priority-${todo.priority}`, todo.fragmentMap)
+      }
+    }
+  }
+
   return (
     <div className="page" id="project-details">
       <header>
@@ -59,8 +80,10 @@ export function ProjectDetailsPage(props: Props) {
         </div>
       </header>
       <div className={toggle ? "main-page-content" : "main-page-content-info-hide"}>
-        <div className={toggle ? "toggle" : "toggle hide"} onClick={() => setToggle(!toggle)}>
-          {toggle ? "hide" : "show"}
+        <div className="toggle" onClick={() => setToggle(!toggle)}>
+          {toggle ? 
+            <span className="material-icons-round">arrow_back_ios</span>
+          : <span className="material-icons-round">arrow_forward_ios</span> }
         </div>
         {toggle ? 
         <div style={{ display: "flex", flexDirection: "column", rowGap: 30, height: "100%" }}>
@@ -158,6 +181,9 @@ export function ProjectDetailsPage(props: Props) {
             }}
           >
             <h4>To-Do</h4>
+            <div onClick={e => clickedColorize(e)}>
+              <span className={colorize ? "material-icons-round selected" : "material-icons-round"} >format_color_fill</span>
+            </div>
             <div
               style={{
                 display: "flex",

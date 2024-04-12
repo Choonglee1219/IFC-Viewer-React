@@ -292,7 +292,6 @@ input:focus, textarea:focus, select:focus {
   position: absolute;
   top: 0;
   left: 0;
-  background-color: var(--background-200);
 }
 
 .todo-card-container {
@@ -312,4 +311,9 @@ input:focus, textarea:focus, select:focus {
 
 .todo-card-container::-webkit-scrollbar {
   display: none;
+}
+
+.dashboard-card .selected {
+  background-color: var(--primary);
+  border-radius: 50px;
 }
