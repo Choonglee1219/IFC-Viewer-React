@@ -15,7 +15,6 @@ appRoot.render(
   <>
     <Router.BrowserRouter>
       <ViewerProvider>
-        <Sidebar />
         <Router.Routes>
           <Router.Route path="/" element={<ProjectsPage projectsManager={projectsManager} />}></Router.Route>
           <Router.Route path="/project/:id" element={<ProjectDetailsPage projectsManager={projectsManager} />}></Router.Route>        

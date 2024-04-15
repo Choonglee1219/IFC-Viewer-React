@@ -120,7 +120,6 @@ export class SimpleQto extends OBC.Component<QtoResult> implements OBC.UI, OBC.D
       }
     }
     await this.updateQtoUI()
-    console.log(this._qtoResult)
   }
 
   async dispose() {

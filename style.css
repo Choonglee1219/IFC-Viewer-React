@@ -26,9 +26,6 @@
 }
 
 #app {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  grid-template-areas: 'sidebar content';
   height: 100vh;
   background-color: var(--background);
   color: #fff;
@@ -69,6 +66,12 @@ button {
 
 button:hover {
   background-color: var(--primary-400);
+}
+
+span:hover {
+  cursor: pointer;
+  background-color: #029AE0;
+  border-radius: 100px;
 }
 
 .page {
@@ -242,6 +245,8 @@ input:focus, textarea:focus, select:focus {
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  overflow: hidden;
 }
 
 #project-details > .main-page-content {
@@ -250,6 +255,13 @@ input:focus, textarea:focus, select:focus {
   gap: 30px;
   grid-template-columns: 475px 1fr;
   height: 100%;
+  position: relative;
+}
+
+#project-details .main-page-content-info-hide {
+  padding: 20px 40px;
+  height: 100%;
+  position: relative;
 }
 
 .btn-secondary {
@@ -274,4 +286,34 @@ input:focus, textarea:focus, select:focus {
 .todo-item:hover {
   background-color: #26282b;
   outline: 2px solid var(--primary);
+}
+
+.toggle {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.todo-card-container {
+  background-color: var(--background-100);
+  border-bottom-right-radius: 8px;
+  border-bottom-left-radius: 8px;
+  width: 100%;
+  height: 23em;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 30px;
+  row-gap: 20px;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.todo-card-container::-webkit-scrollbar {
+  display: none;
+}
+
+.dashboard-card .selected {
+  background-color: var(--primary);
+  border-radius: 50px;
 }
