@@ -1,10 +1,12 @@
 import * as React from "react"
 import * as Router from "react-router-dom"
 import * as OBC from "openbim-components"
+import * as THREE from "three"
 import { ProjectsManager } from "../classes/ProjectsManager"
 import { IFCViewer, ViewerContext } from "./IFCViewer"
 import { useState } from "react"
-import { ToDo, TodoCreator } from "../bim-components/TodoCreator"
+import { ToDo, TodoCreator, ToDoPriority } from "../bim-components/TodoCreator"
+import { TodoCard } from "../bim-components/TodoCreator/src/TodoCard"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -20,14 +22,81 @@ export function ProjectDetailsPage(props: Props) {
   const project = props.projectsManager.getProject(routeParams.id)
   if (!project) {return (<p>The project with ID {routeParams.id} wasn't found.</p>)}
   
-  function clickedTodoAdd(event: MouseEvent) {
-    event.defaultPrevented
-
-    
+  const addTodo = (todo: ToDo) => {
+    setTodoList(todoList => [...todoList, todo])
   }
 
-  const addTodo = () => {
-    setTodoList([...todoList])
+  async function clickedTodoAdd(event: MouseEvent) {
+    event.defaultPrevented
+    if(!viewer) {return}
+    const form = new OBC.Modal(viewer)
+    viewer.ui.add(form)
+    form.title = "Create New ToDo"
+
+    const descriptionInput = new OBC.TextArea(viewer)
+    descriptionInput.label = "Description"
+    form.slots.content.addChild(descriptionInput)
+
+    const priorityDropdown = new OBC.Dropdown(viewer)
+    priorityDropdown.label = "Priority"
+    priorityDropdown.addOption("Low", "Normal", "High")
+    priorityDropdown.value = "Normal"
+    form.slots.content.addChild(priorityDropdown)
+
+    form.slots.content.get().style.padding = "20px"
+    form.slots.content.get().style.display = "flex"
+    form.slots.content.get().style.flexDirection = "column"
+    form.slots.content.get().style.rowGap = "20px"
+
+    form.onAccept.add(async () => {
+      const camera = viewer.camera
+      if (!(camera instanceof OBC.OrthoPerspectiveCamera)) {
+        throw new Error("TodoCreator needs the OrthoPerspectiveCamera in order to work")
+      }
+
+      const position = new THREE.Vector3()
+      camera.controls.getPosition(position)
+      const target = new THREE.Vector3()
+      camera.controls.getTarget(target)
+      const todoCamera = { position, target }
+      
+      const highlighter = await viewer.tools.get(OBC.FragmentHighlighter)
+      const todo: ToDo = {
+        camera: todoCamera,
+        description: descriptionInput.value,
+        date: new Date(),
+        fragmentMap: highlighter.selection.select,
+        priority: priorityDropdown.value as ToDoPriority
+      }
+
+      const todoCard = new TodoCard(viewer)
+      todoCard.description = todo.description
+      todoCard.date = todo.date
+      todoCard.onCardClick.add(() => {
+        camera.controls.setLookAt(
+          todo.camera.position.x,
+          todo.camera.position.y,
+          todo.camera.position.z,
+          todo.camera.target.x,
+          todo.camera.target.y,
+          todo.camera.target.z,
+          true
+        )
+        const fragmentMapLength = Object.keys(todo.fragmentMap).length
+        if (fragmentMapLength === 0) {return}
+        highlighter.highlightByID("select", todo.fragmentMap)
+      })
+      const todoList = viewer.tools.list.get(TodoCreator.uuid).uiElement.get("todoList")
+      todoList.addChild(todoCard)
+
+      descriptionInput.value = ""
+      form.visible = false
+      addTodo(todo)
+      viewer.tools.list.get(TodoCreator.uuid).onTodoCreated.trigger(todo)
+    })
+    
+    form.onCancel.add(() => form.visible = false)
+    form.visible = true
   }
 
   async function clickedTodo(event: MouseEvent, todo: ToDo) {

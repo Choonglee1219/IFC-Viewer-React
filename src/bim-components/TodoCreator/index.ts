@@ -2,7 +2,7 @@ import * as OBC from "openbim-components"
 import * as THREE from "three"
 import { TodoCard } from "./src/TodoCard"
 
-type ToDoPriority = "Low" | "Medium" | "High"
+export type ToDoPriority = "Low" | "Medium" | "High"
 
 export interface ToDo {
   description: string
@@ -22,15 +22,16 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
   }>()
   private _components: OBC.Components
   private _list: ToDo[] = []
-  private setTodoList: () => void
+  private setTodoList: (todo:ToDo) => void
 
-  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: () => void) {
+  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: (todo:ToDo) => void) {
     super(components)
     this._components = components
     components.tools.add(TodoCreator.uuid, this)
     this._list = todoList
     this.setUI()
     this.setTodoList = setTodoList
+    setTodoList = () => {this.onTodoCreated}
   }
 
   async dispose() {
@@ -71,8 +72,7 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
       priority
     }
 
-    this._list.push(todo)
-    this.setTodoList()
+    this.setTodoList(todo)
 
     const todoCard = new TodoCard(this._components)
     todoCard.description = todo.description
