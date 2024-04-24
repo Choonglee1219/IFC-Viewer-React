@@ -22,16 +22,13 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
   }>()
   private _components: OBC.Components
   private _list: ToDo[] = []
-  private setTodoList: (todo:ToDo) => void
-
-  constructor(components: OBC.Components, todoList: ToDo[], setTodoList: (todo:ToDo) => void) {
+  
+  constructor(components: OBC.Components, todoList: ToDo[]) {
     super(components)
     this._components = components
     components.tools.add(TodoCreator.uuid, this)
     this._list = todoList
     this.setUI()
-    this.setTodoList = setTodoList
-    setTodoList = () => {this.onTodoCreated}
   }
 
   async dispose() {
@@ -47,8 +44,6 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
     highlighter.add(`${TodoCreator.uuid}-priority-High`, [new THREE.MeshStandardMaterial({ color: 0xff7676 })])
   }
 
-  deleteTodo() {}
-
   async addTodo(description: string, priority: ToDoPriority) {
     if (!this.enabled) { return }
     
@@ -56,7 +51,7 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
     if (!(camera instanceof OBC.OrthoPerspectiveCamera)) {
       throw new Error("TodoCreator needs the OrthoPerspectiveCamera in order to work")
     }
-
+    
     const position = new THREE.Vector3()
     camera.controls.getPosition(position)
     const target = new THREE.Vector3()
@@ -71,9 +66,9 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
       fragmentMap: highlighter.selection.select,
       priority
     }
-
-    this.setTodoList(todo)
-
+    
+    this._list.push(todo)
+    
     const todoCard = new TodoCard(this._components)
     todoCard.description = todo.description
     todoCard.date = todo.date
@@ -93,30 +88,43 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
     })
     const todoList = this.uiElement.get("todoList")
     todoList.addChild(todoCard)
+    
+    todoCard.onCardDeleteClick.add(() => {
+      this.deleteTodo(todo, todoCard)
+    })
+    
     this.onTodoCreated.trigger(todo)
+  }
+  
+  deleteTodo(todo: ToDo, todoCard: TodoCard) {
+    const updateToDoList = this._list.filter((toDo) => {
+      return(toDo.description!=toDo.description)
+    })
+    this._list = updateToDoList
+    todoCard.dispose()
   }
 
   private async setUI() {
     const activationBtn = new OBC.Button(this._components)
     activationBtn.materialIcon = "construction"
-
+    
     const newTodoBtn = new OBC.Button(this._components, { name: "Create" })
     activationBtn.addChild(newTodoBtn)
-
+    
     const form = new OBC.Modal(this._components)
     this._components.ui.add(form)
     form.title = "Create New ToDo"
-
+    
     const descriptionInput = new OBC.TextArea(this._components)
     descriptionInput.label = "Description"
     form.slots.content.addChild(descriptionInput)
-
+    
     const priorityDropdown = new OBC.Dropdown(this._components)
     priorityDropdown.label = "Priority"
     priorityDropdown.addOption("Low", "Normal", "High")
     priorityDropdown.value = "Normal"
     form.slots.content.addChild(priorityDropdown)
-
+    
     form.slots.content.get().style.padding = "20px"
     form.slots.content.get().style.display = "flex"
     form.slots.content.get().style.flexDirection = "column"
