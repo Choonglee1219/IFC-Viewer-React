@@ -209,7 +209,7 @@ export function IFCViewer(prop : Iprops) {
       highlighter.highlightByID("select", fragmentIdMap)
     })
 
-    const todoCreator = new TodoCreator(viewer, prop.todoList, prop.addTodo)
+    const todoCreator = new TodoCreator(viewer, prop.todoList)
     await todoCreator.setup()
 
     const simpleQto = new SimpleQto(viewer)

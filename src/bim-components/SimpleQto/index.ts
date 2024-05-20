@@ -87,6 +87,7 @@ export class SimpleQto extends OBC.Component<QtoResult> implements OBC.UI, OBC.D
   }
 
   async sumQuantities(fragmentIdMap: OBC.FragmentIdMap) {
+    this._qtoResult = {}
     const fragmentManager = await this._components.tools.get(OBC.FragmentManager)
     const propertiesProcessor = await this._components.tools.get(OBC.IfcPropertiesProcessor)
     for (const fragmentID in fragmentIdMap) {

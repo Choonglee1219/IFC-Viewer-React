@@ -155,15 +155,15 @@ export function ProjectDetailsPage(props: Props) {
           : <span className="material-icons-round">arrow_forward_ios</span> }
         </div>
         {toggle ? 
-        <div style={{ display: "flex", flexDirection: "column", rowGap: 30, height: "100%" }}>
-        <div className="dashboard-card" style={{ padding: "30px 0"}}>
+        <div style={{ display: "flex", flexDirection: "column", rowGap: "2rem", height: "100%" }}>
+        <div className="dashboard-card" style={{ padding: "1rem 0", height: "17rem"}}>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "0px 30px",
-              marginBottom: 30
+              padding: "0px 1rem",
+              marginBottom: "1rem"
             }}
           >
             <p
@@ -181,7 +181,7 @@ export function ProjectDetailsPage(props: Props) {
               <p style={{ width: "100%" }}>Edit</p>
             </button>
           </div>
-          <div style={{ padding: "0 30px" }}>
+          <div style={{ padding: "0 1rem" }}>
             <div>
               <h5>{project.name}</h5>
               <p>{project.description}</p>
@@ -189,8 +189,8 @@ export function ProjectDetailsPage(props: Props) {
             <div
               style={{
                 display: "flex",
-                columnGap: 30,
-                padding: "30px 0px",
+                columnGap: "1rem",
+                padding: "1rem 0px",
                 justifyContent: "space-between"
               }}
             >
@@ -239,14 +239,14 @@ export function ProjectDetailsPage(props: Props) {
             </div>
           </div>
         </div>
-        <div className="dashboard-card" style={{ flexGrow: 1}}>
+        <div className="dashboard-card" style={{ flexGrow: 1, height: "6rem"}}>
           <div
             style={{
-              padding: "20px 30px",
+              padding: "max(30px, 2rem)",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              height: "20%"
+              height: "15%"
             }}
           >
             <h4>To-Do</h4>
@@ -258,7 +258,7 @@ export function ProjectDetailsPage(props: Props) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "end",
-                columnGap: 20
+                columnGap: "1rem"
               }}
             >
               <div
@@ -285,7 +285,7 @@ export function ProjectDetailsPage(props: Props) {
                 }}
               >
                 <div
-                  style={{ display: "flex", columnGap: 15, alignItems: "center" }}
+                  style={{ display: "flex", columnGap: "0.5rem", alignItems: "center" }}
                 >
                   <span
                     className="material-icons-round"
