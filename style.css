@@ -306,6 +306,7 @@ input:focus, textarea:focus, select:focus {
   overflow: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  
 }
 
 .todo-card-container::-webkit-scrollbar {
