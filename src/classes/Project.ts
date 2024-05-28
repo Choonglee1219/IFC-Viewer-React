@@ -9,6 +9,8 @@ export interface IProject {
 	status: ProjectStatus
 	userRole: UserRole
 	finishDate: Date
+  //자동으로 불러올 설계 파일을 저장
+  ifc_data: Uint8Array
 }
 
 export class Project implements IProject {
@@ -18,6 +20,7 @@ export class Project implements IProject {
 	status: "pending" | "active" | "finished"
 	userRole: "architect" | "engineer" | "developer"
   finishDate: Date
+  ifc_data: Uint8Array
   
   //Class internals
   ui: HTMLDivElement
@@ -32,7 +35,7 @@ export class Project implements IProject {
     this.id = uuidv4()
     this.setUI()
   }
-
+  //더이상 사용하지 않음 삭제 가능
   //creates the project card UI
   setUI() {
     if (this.ui) {return}
