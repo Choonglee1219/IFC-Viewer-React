@@ -33,9 +33,8 @@ export class Project implements IProject {
       this[key] = data[key]
     }
     this.id = uuidv4()
-    this.setUI()
   }
-  //더이상 사용하지 않음 삭제 가능
+  /* react component로 대체
   //creates the project card UI
   setUI() {
     if (this.ui) {return}
@@ -68,4 +67,5 @@ export class Project implements IProject {
       </div>
     </div>`
   }
+  */
 }

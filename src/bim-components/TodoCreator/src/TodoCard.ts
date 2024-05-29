@@ -4,6 +4,7 @@ export class TodoCard extends OBC.SimpleUIComponent {
 
   onCardClick = new OBC.Event()
   onCardDeleteClick = new OBC.Event()
+  onCardEditClick = new OBC.Event()
 
   slots: {
     actionButtons: OBC.SimpleUIComponent
@@ -30,7 +31,7 @@ export class TodoCard extends OBC.SimpleUIComponent {
               <p id="description">Make anything here as you want, even something longer.</p>
             </div>
           </div>
-          <div data-tooeen-slot="actionButtons"></div>
+          <div style="display: flex;" data-tooeen-slot="actionButtons"></div>
         </div>
       </div>
     `
@@ -41,13 +42,21 @@ export class TodoCard extends OBC.SimpleUIComponent {
     })
 
     this.setSlot("actionButtons", new OBC.SimpleUIComponent(this._components))
+    
+    //edit button
+    const editBtn = new OBC.Button(this._components)
+    editBtn.materialIcon = "edit"
+    editBtn.onClick.add(() => {
+      this.onCardEditClick.trigger()
+    })
+    this.slots.actionButtons.addChild(editBtn)
 
+    //delete button
     const deleteBtn = new OBC.Button(this._components)
     deleteBtn.materialIcon = "delete"
-    this.slots.actionButtons.addChild(deleteBtn)
-
     deleteBtn.onClick.add(() => {
       this.onCardDeleteClick.trigger()
     })
+    this.slots.actionButtons.addChild(deleteBtn)
   }
 }

@@ -92,8 +92,49 @@ export class TodoCreator extends OBC.Component<ToDo[]> implements OBC.UI, OBC.Di
     todoCard.onCardDeleteClick.add(() => {
       this.deleteTodo(todo, todoCard)
     })
+
+    todoCard.onCardEditClick.add(() => {
+      this.editTodo(todo, todoCard)
+    })
     
     this.onTodoCreated.trigger(todo)
+  }
+
+  editTodo(todo: ToDo, todoCard: TodoCard) {
+    const form = new OBC.Modal(this._components)
+    this._components.ui.add(form)
+    form.title = "Edit ToDo"
+
+    const descriptionInput = new OBC.TextArea(this._components)
+    descriptionInput.label = "Description"
+    descriptionInput.value = todo.description
+    form.slots.content.addChild(descriptionInput)
+    
+    const priorityDropdown = new OBC.Dropdown(this._components)
+    priorityDropdown.label = "Priority"
+    priorityDropdown.addOption("Low", "Normal", "High")
+    priorityDropdown.value = todo.priority
+    form.slots.content.addChild(priorityDropdown)
+    
+    form.slots.content.get().style.padding = "20px"
+    form.slots.content.get().style.display = "flex"
+    form.slots.content.get().style.flexDirection = "column"
+    form.slots.content.get().style.rowGap = "20px"
+
+    form.onAccept.add(() => {
+      const updateToDoList = this._list.filter((item) => {
+        return (item!=todo)
+      })
+      this._list = updateToDoList
+      todoCard.dispose()
+      this.addTodo(descriptionInput.value, priorityDropdown.value as ToDoPriority)
+      descriptionInput.value = ""
+      form.visible = false
+    })
+    
+    form.onCancel.add(() => form.visible = false)
+
+    form.visible = true
   }
   
   deleteTodo(todo: ToDo, todoCard: TodoCard) {
