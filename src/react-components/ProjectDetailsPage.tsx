@@ -308,7 +308,7 @@ export function ProjectDetailsPage(props: Props) {
       </div>
         : 
       <></>}
-      <IFCViewer todoList={todoList} addTodo={addTodo}/>
+      <IFCViewer todoList={todoList} addTodo={addTodo} project={project}/>
       </div>
     </div>
   )

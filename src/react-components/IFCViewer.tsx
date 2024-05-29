@@ -4,6 +4,7 @@ import { FragmentsGroup } from "bim-fragment"
 import { TodoCreator, ToDo } from "../bim-components/TodoCreator"
 import { SimpleQto } from "../bim-components/SimpleQto"
 import { GUI } from 'dat.gui'
+import { IProject } from "../classes/Project"
 
 interface IViewerContext {
   viewer: OBC.Components | null
@@ -26,7 +27,8 @@ export function ViewerProvider(props: {children: React.ReactNode}) {
 
 interface Iprops {
   todoList: ToDo[],
-  addTodo: (todo:ToDo) => void
+  addTodo: (todo:ToDo) => void,
+  project: IProject
 }
 
 export function IFCViewer(prop : Iprops) {
@@ -128,11 +130,10 @@ export function IFCViewer(prop : Iprops) {
         classifier.byStorey(model)
         classifier.byEntity(model)
         classifier.byModel(model.name, model)
-        console.log(classifier)
         const tree = await createModelTree()
         await classificationWindow.slots.content.dispose(true)
         classificationWindow.addChild(tree)
-      
+        
         const classifications = classifier.get()
         const storeys = {}
         const storeyNames = Object.keys(classifications.storeys)
@@ -159,7 +160,6 @@ export function IFCViewer(prop : Iprops) {
             hider.set(visible, found);
           });
         }
-
         propertiesProcessor.process(model)
         highlighter.events.select.onHighlight.add((fragmentMap) => {
           const expressID = [...Object.values(fragmentMap)[0]][0]
@@ -169,14 +169,14 @@ export function IFCViewer(prop : Iprops) {
         alert(error)
       }
     }
-
+    
     ifcLoader.onIfcLoaded.add(async (model) => {
       exportFragments(model)
       onModelLoaded(model)
     })
 
     fragmentManager.onFragmentsLoaded.add((model) => {
-      model.properties = {} //Get this from a JSON file exported from the IFC first load!
+      //model.properties = {} //Get this from a JSON file exported from the IFC first load!
       onModelLoaded(model)
     })
 
@@ -228,10 +228,15 @@ export function IFCViewer(prop : Iprops) {
       hider.uiElement.get("main"),
     )
     viewer.ui.addToolbar(toolbar)
+    //default project load
+    const name:string = prop.project.name
+    const model = await ifcLoader.load(prop.project.ifc_data, name);
+    scene.add(model)
   }
 
   React.useEffect(() => {
     createViewer()
+    //resize event observe
     const observer = new ResizeObserver(entries => {
       for (let entry of entries) {
         window.dispatchEvent(new Event('resize'))

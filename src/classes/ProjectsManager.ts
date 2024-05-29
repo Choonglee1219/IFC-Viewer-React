@@ -1,17 +1,39 @@
 import { IProject, Project } from "./Project"
 
+//TODO 삭제예정
+//sample ifc file load
+//이후 데이터베이스에서 받아오는 방식으로 변경 필요
+const file = await fetch("src/resource/NAV-IPI-ET1_E07-ZZZ-M3D-EST.ifc");
+const buffer = await file.arrayBuffer();
+const project1_data = new Uint8Array(buffer);
+
+const file2 = await fetch("src/resource/HNS-CTL-MOD-EST-001.ifc")
+const buffer2 = await file2.arrayBuffer();
+const project2_data = new Uint8Array(buffer2)
+
 export class ProjectsManager {
   list: Project[] = []
   onProjectCreated = (project: Project) => {}
   onProjectDeleted = () => {}
 
   constructor() {
+    //TODO 삭제예정
+    //더미데이터 생성
     this.newProject({
       name: "Default Project",
       description: "This is just a default app project",
       status: "pending",
       userRole: "architect",
-      finishDate: new Date()
+      finishDate: new Date(),
+      ifc_data: project1_data
+    })
+    this.newProject({
+      name: "Default Project2",
+      description: "This is just a default app project",
+      status: "active",
+      userRole: "developer",
+      finishDate: new Date(),
+      ifc_data: project2_data
     })
   }
 

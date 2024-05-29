@@ -43,7 +43,9 @@ export function ProjectsPage(props: Props) {
       description: formData.get("description") as string,
       status: formData.get("status") as ProjectStatus,
       userRole: formData.get("userRole") as UserRole,
-      finishDate: new Date(formData.get("finishDate") as string)
+      finishDate: new Date(formData.get("finishDate") as string),
+      //TODO 파일 업로드 방식 구현 필요
+      ifc_data: new Uint8Array()
     }
     try {
       const project = props.projectsManager.newProject(projectData)
