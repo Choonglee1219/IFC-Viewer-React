@@ -1,5 +1,7 @@
 import * as React from "react"
+import * as THREE from "three"
 import * as OBC from "openbim-components"
+import * as BUI from "@thatopen/ui" 
 import { FragmentsGroup } from "bim-fragment"
 import { TodoCreator, ToDo } from "../bim-components/TodoCreator"
 import { SimpleQto } from "../bim-components/SimpleQto"
@@ -145,21 +147,81 @@ export function IFCViewer(prop : Iprops) {
         for (const name of classNames) {
           classes[name] = true
         }
-        const gui = new GUI()
-        const storeysGui = gui.addFolder("Storeys");
+
+
+        // gui.js 대시 ThatOpen/ui를 사용하여 hider 표현함
+        BUI.Manager.init();
+        const panel = BUI.Component.create<BUI.PanelSection>(() => {
+          return BUI.html`
+            <bim-panel active label="Hider" 
+              style="position: fixed; top: 5px; right: 5px; background: #151515;">
+              
+              <bim-panel-section fixed name="Floors" style="padding-top: 10px;">
+              </bim-panel-section>
+              
+              <bim-panel-section fixed name="Categories" style="padding-top: 10px;">
+              </bim-panel-section>
+              
+            </bim-panel>
+          `;
+        });
+
+        document.body.append(panel);
+
+        const floorSection = panel.querySelector(
+          "bim-panel-section[name='Floors']",
+        ) as BUI.PanelSection;
+
+        const categorySection = panel.querySelector(
+          "bim-panel-section[name='Categories']",
+        ) as BUI.PanelSection;
+
         for (const name in storeys) {
-          storeysGui.add(storeys, name).onChange(async (visible) => {
-            const found = await classifier.find({ storeys: [name] });
-            hider.set(visible, found);
+          const panel = BUI.Component.create<BUI.Checkbox>(() => {
+            return BUI.html`
+              <bim-checkbox checked label="${name}"
+                @change="${async ({ target }: { target: BUI.Checkbox }) => {
+                  const found = await classifier.find({ storeys: [name] });
+                  hider.set(target.value, found);
+                }}">
+              </bim-checkbox>
+            `;
           });
+          floorSection.append(panel);
         }
-        const entitiesGui = gui.addFolder("Classes");
+
         for (const name in classes) {
-          entitiesGui.add(classes, name).onChange(async (visible) => {
-            const found = await classifier.find({ entities: [name] });
-            hider.set(visible, found);
+          const checkbox = BUI.Component.create<BUI.Checkbox>(() => {
+            return BUI.html`
+              <bim-checkbox checked label="${name}"
+                @change="${async ({ target }: { target: BUI.Checkbox }) => {
+                  const found = await classifier.find({ entities: [name] });
+                  hider.set(target.value, found);
+                }}">
+              </bim-checkbox>
+            `;
           });
+          categorySection.append(checkbox);
         }
+
+        // const gui = new GUI()
+        // const storeysGui = gui.addFolder("Storeys");
+        // for (const name in storeys) {
+        //   storeysGui.add(storeys, name).onChange(async (visible) => {
+        //     const found = await classifier.find({ storeys: [name] });
+        //     hider.set(visible, found);
+        //   });
+        // }
+        // const entitiesGui = gui.addFolder("Classes");
+        // for (const name in classes) {
+        //   entitiesGui.add(classes, name).onChange(async (visible) => {
+        //     const found = await classifier.find({ entities: [name] });
+        //     hider.set(visible, found);
+        //   });
+        // }
+
+
+
         propertiesProcessor.process(model)
         highlighter.events.select.onHighlight.add((fragmentMap) => {
           const expressID = [...Object.values(fragmentMap)[0]][0]
@@ -171,12 +233,12 @@ export function IFCViewer(prop : Iprops) {
     }
     
     ifcLoader.onIfcLoaded.add(async (model) => {
-      exportFragments(model)
+      // exportFragments(model)
       onModelLoaded(model)
     })
 
     fragmentManager.onFragmentsLoaded.add((model) => {
-      //model.properties = {} //Get this from a JSON file exported from the IFC first load!
+      // model.properties = {} //Get this from a JSON file exported from the IFC first load!
       onModelLoaded(model)
     })
 

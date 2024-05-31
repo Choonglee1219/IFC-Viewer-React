@@ -18,6 +18,7 @@
     "vite": "^4.4.10"
   },
   "dependencies": {
+    "@thatopen/ui": "^2.0.2",
     "bim-fragment": "1.0.22",
     "dat.gui": "^0.7.9",
     "material-icons": "^1.13.12",
