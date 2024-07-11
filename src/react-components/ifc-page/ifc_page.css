@@ -1,0 +1,22 @@
+.ifc_page_container {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template: 'ribbon ribbon ribbon' auto
+                 'left viewport right' 2fr
+                 'left bot bot' 15rem
+                  /17rem 1fr 20rem;
+}
+#tabs {
+  grid-area: ribbon;
+  height: 5rem;
+}
+#ifc_viewer {
+  grid-area: viewport;
+}
+#bot {
+  grid-area: bot;
+}
+#rig {
+  grid-area: right;
+}
