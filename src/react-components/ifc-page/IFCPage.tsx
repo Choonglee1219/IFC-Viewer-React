@@ -1,13 +1,14 @@
 import * as BUI from "@thatopen/ui"
 import * as OBC from "@thatopen/components"
-//import * as OBC from "openbim-components"
-import * as WEBIFC from 'web-ifc'
 import * as OBF from "@thatopen/components-front"
-import React, { useEffect, useRef, useState } from "react"
-import { useParams } from "react-router-dom"
-import './ifc_page.css'
+import * as CUI from "./relationsTree/index"
+import * as WEBIFC from 'web-ifc'
+import React, { useEffect, useRef } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import { ProjectsManager } from "../../classes/ProjectsManager";
 import { createComponent } from '@lit/react';
+import { Resizable } from 're-resizable';
+import './ifc_page.css'
 
 interface Props {
   projectsManager: ProjectsManager
@@ -15,74 +16,50 @@ interface Props {
 //BUI init
 BUI.Manager.init()
 
-
 export default function IFCPage(props: Props) {
+  const navigate = useNavigate();
   //project info from props
   const routeParams = useParams<{ id: string }>()
   if (!routeParams.id) {return (<p>Project ID is needed to see this page</p>)}
   const project = props.projectsManager.getProject(routeParams.id)
   if (!project) {return (<p>The project with ID {routeParams.id} wasn't found.</p>)}
 
+  const goBack = () => {
+    navigate(-1)
+  }
+
   //create ifc-viewer
-  const ref = React.useRef<HTMLElement>(null)
+  const ref = useRef<HTMLElement>(null)
   const createViewer = async () => {
     const components = new OBC.Components()
     const viewport = ref.current as HTMLElement
 
-    // const sceneComponent = new OBC.SimpleScene(viewer)
-    // sceneComponent.setup()
-    // viewer.scene = sceneComponent
-    // const scene = sceneComponent.get()
-    // scene.background = null
-
-    // const viewerContainer = ref.current as HTMLElement
-    // const rendererComponent = new OBC.PostproductionRenderer(viewer, viewerContainer)
-    // viewer.renderer = rendererComponent
-
-    // const cameraComponent = new OBC.OrthoPerspectiveCamera(viewer)
-    // viewer.camera = cameraComponent
-
-    // const raycasterComponent = new OBC.SimpleRaycaster(viewer)
-    // viewer.raycaster = raycasterComponent
-
-    // viewer.init()
-    // cameraComponent.updateAspect()
-    // rendererComponent.postproduction.enabled = true
-    // const ifcLoader = new OBC.FragmentIfcLoader(viewer)
-    // ifcLoader.settings.wasm = {
-    //   path: "https://unpkg.com/web-ifc@0.0.43/",
-    //   absolute: true
-    // }
-    // const highlighter = new OBC.FragmentHighlighter(viewer)
-    // highlighter.setup()
-    // const model = await ifcLoader.load(project.ifc_data, '123');
-    // scene.add(model)
-
-    //before
+    //init
     const worlds = components.get(OBC.Worlds)
-    const world = worlds.create<
-      OBC.SimpleScene,
-      OBC.SimpleCamera,
-      OBC.SimpleRenderer
-    >()
-    
-    world.scene = new OBC.SimpleScene(components)
-    world.renderer = new OBC.SimpleRenderer(components, viewport)
-    world.camera = new OBC.SimpleCamera(components)
-    
-    components.init()
-    world.camera.controls.setLookAt(12, 6, 8, 0, 0, -10);
-    world.scene.setup()
-    world.renderer.enabled = true
+    const world = worlds.create()
+    const sceneComponent = new OBC.SimpleScene(components)
+    sceneComponent.setup()
+    world.scene = sceneComponent
+    const rendererComponent = new OBC.SimpleRenderer(components, viewport)
+    world.renderer = rendererComponent
+    const cameraComponent = new OBC.SimpleCamera(components)
+    world.camera = cameraComponent
+
     //background grid
     const grids = components.get(OBC.Grids);
     grids.create(world);
 
+    components.init()
+
+    //fragment highlighter
     const highlighter = components.get(OBF.Highlighter)
     highlighter.setup({ world })
 
+    //ifc loader
     const ifcLoader = components.get(OBC.IfcLoader)
     await ifcLoader.setup()
+
+    //fragments loader
     const fragments = components.get(OBC.FragmentsManager)
     const fragmentIfcLoader = components.get(OBC.IfcLoader)
     await fragmentIfcLoader.setup();
@@ -93,14 +70,42 @@ export default function IFCPage(props: Props) {
     ];
     
     for (const cat of excludedCats) {
-      fragmentIfcLoader.settings.excludedCategories.add(cat);
+      fragmentIfcLoader.settings.excludedCategories.add(cat)
     }
-    fragmentIfcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true;
+    fragmentIfcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true
 
+    //fragments manager
+    const fragmentsManager = components.get(OBC.FragmentsManager)
+    fragmentsManager.onFragmentsLoaded.add((model) => {
+      if (world.scene) world.scene.three.add(model)
+    });
+    
+    //create Classification Tree
+    const indexer = components.get(OBC.IfcRelationsIndexer)
+    fragmentsManager.onFragmentsLoaded.add(async (model) => {
+      if (model.hasProperties) {
+        await indexer.process(model)
+      }
+    });
+    const [relationsTree] = CUI.relationsTree({
+      components,
+      models: [],
+    })
+    relationsTree.preserveStructureOnFilter = true
+    const table = BUI.Component.create(() => {
+      return BUI.html`
+      ${relationsTree}
+      `
+    })
+    document.getElementById('table_container')?.appendChild(table)
+
+
+    // load ifc-file using absolute path
     // const file = await fetch("/src/resource/small.ifc")
     // const buffer = await file.arrayBuffer()
     // const typedArray = new Uint8Array(buffer)
     // const model = await ifcLoader.load(typedArray)
+
     const model = await ifcLoader.load(project.ifc_data)
     world.scene.three.add(model)
   }
@@ -114,19 +119,22 @@ export default function IFCPage(props: Props) {
       click: 'click'
     }
   })
-
+  const Label = createComponent({
+    react: React,
+    tagName: 'bim-label',
+    elementClass: BUI.Label
+  })
   const Tabs = createComponent({
     react: React,
     tagName: 'bim-tabs',
     elementClass: BUI.Tabs
   })
-
-  const TabA = createComponent({
+  const Tab = createComponent({
     react: React,
     tagName: 'bim-tab',
     elementClass: BUI.Tab
   })
-  const ToolBarA = createComponent({
+  const ToolBar = createComponent({
     react: React,
     tagName: 'bim-toolbar',
     elementClass: BUI.Toolbar
@@ -136,23 +144,19 @@ export default function IFCPage(props: Props) {
     tagName: 'bim-toolbar-section',
     elementClass: BUI.ToolbarSection
   })
-  const TabB = createComponent({
+  const Panel = createComponent({
     react: React,
-    tagName: 'bim-tab',
-    elementClass: BUI.Tab
+    tagName: 'bim-panel',
+    elementClass: BUI.Panel
   })
-
-  const Viewer = createComponent({
+  const PanelSection = createComponent({
     react: React,
-    tagName: 'bim-viewer',
-    elementClass: BUI.Viewport
+    tagName: 'bim-panel-section',
+    elementClass: BUI.PanelSection
   })
-  
-  
   
   useEffect(() => {
     createViewer()
-
     return () => {
       
     }
@@ -160,11 +164,66 @@ export default function IFCPage(props: Props) {
 
   return (
     <div className="ifc_page_container">
-      <ToolBarSection id="tabs"><Button label="A button" click={() => console.log('Btn Clicked')} icon="ph:export-fill" /></ToolBarSection>
-      <Button label="123" click={() => console.log()} icon="ph:export-fill" />
-      <Viewer id="ifc_viewer" ref={ref}></Viewer>
-      <ToolBarSection><Button label="A button" click={() => console.log('Btn Clicked')} icon="ph:export-fill" /></ToolBarSection>
-      <div id="bot">footer</div>
+      {/******** Page Header ********/}
+      <div className="ifc_page_header">
+        <ToolBar>
+          <ToolBarSection>
+            <Button vertical label="" click={() => goBack()} icon="ic:sharp-arrow-back" />
+            <Label style={{margin: '0 2rem 0 2rem', color: 'white'}}>{project.name}</Label>
+          </ToolBarSection>
+        </ToolBar>
+        <ToolBar>
+          <ToolBarSection>
+            <Button vertical label="Load IFC" click={() => goBack()} icon="mage:box-3d-fill" />
+            <Button vertical label="Load FRAG" click={() => goBack()} icon="ic:sharp-upload" />
+            <Button vertical label="Model List" click={() => goBack()} icon="ic:outline-list" />
+            <Button vertical label="Create Todo" click={() => goBack()} icon="ic:baseline-create" />
+            <Button vertical label="Todo List" click={() => goBack()} icon="ic:outline-list" />
+          </ToolBarSection>
+        </ToolBar>
+      </div>
+      {/******** Page Body ********/}
+      <div style={{display: 'flex', width: '100%', height: '90%', justifyContent: 'space-between'}}>
+        {/******** Page Body Left ********/}
+          <Panel label='Classification'>
+            <PanelSection label='Tree'>
+              <div id="table_container" style={{overflowY:'scroll'}} ></div>
+            </PanelSection>
+            <PanelSection label='button'>
+              <Button vertical label="Todo List" click={() => goBack()} icon="ic:outline-list" />
+            </PanelSection>
+          </Panel>
+          
+        {/******** Page Body Center********/}
+        <div>
+          <Resizable
+            defaultSize={{width: '1200px', height: '700px'}}
+            enable={{
+              top: false,
+              topLeft: false,
+              topRight: false,
+              left: true,
+              right: true,
+              bottom: true,
+              bottomLeft: true,
+              bottomRight: true
+            }}
+          >
+            <div id="ifc_viewer" ref={ref}></div>
+          </Resizable>
+          {/******** Page Bottom ********/}
+      <Button label="test-bottom section"/>
+        </div>
+        {/******** Page Right ********/}
+          <Panel label='Right Panel' style={{minWidth: '10rem'}}>
+            <PanelSection label='Properties'>
+              <Button label="test-btn" />
+            </PanelSection>
+            <PanelSection label='Quantification'>
+              <div id='test'></div>
+            </PanelSection>
+          </Panel>
+      </div>
     </div>
   );
 };
