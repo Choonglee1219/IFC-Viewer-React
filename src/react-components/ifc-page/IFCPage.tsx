@@ -1,7 +1,7 @@
 import * as BUI from "@thatopen/ui"
 import * as OBC from "@thatopen/components"
 import * as OBF from "@thatopen/components-front"
-import * as CUI from "./relationsTree/index"
+import * as CUI from "./tables/index"
 import * as WEBIFC from 'web-ifc'
 import React, { useEffect, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
@@ -28,11 +28,14 @@ export default function IFCPage(props: Props) {
     navigate(-1)
   }
 
+  const viewerRef = useRef<HTMLElement>(null)
+  const treeRef = useRef<HTMLElement>(null)
+  const propertyRef = useRef<HTMLElement>(null)
+
   //create ifc-viewer
-  const ref = useRef<HTMLElement>(null)
   const createViewer = async () => {
     const components = new OBC.Components()
-    const viewport = ref.current as HTMLElement
+    const viewport = viewerRef.current as HTMLElement
 
     //init
     const worlds = components.get(OBC.Worlds)
@@ -87,25 +90,42 @@ export default function IFCPage(props: Props) {
         await indexer.process(model)
       }
     });
-    const [relationsTree] = CUI.relationsTree({
+    const [relationsTree] = CUI.tables.relationsTree({
       components,
       models: [],
     })
     relationsTree.preserveStructureOnFilter = true
-    const table = BUI.Component.create(() => {
+    const classTable = BUI.Component.create(() => {
       return BUI.html`
       ${relationsTree}
       `
     })
-    document.getElementById('table_container')?.appendChild(table)
+    treeRef.current?.appendChild(classTable)
 
+    //element properties
+    const [propertiesTable, updatePropertiesTable] = CUI.tables.elementProperties({
+      components,
+      fragmentIdMap: {},
+    });
+    
+    propertiesTable.preserveStructureOnFilter = true;
+    propertiesTable.indentationInText = false;
+    
+    highlighter.events.select.onHighlight.add((fragmentIdMap) => {
+      updatePropertiesTable({ fragmentIdMap });
+    });
+    
+    highlighter.events.select.onClear.add(() =>
+      updatePropertiesTable({ fragmentIdMap: {} }),
+    );
+    const propertyTable = BUI.Component.create(() => {
+      return BUI.html`
+      ${propertiesTable}
+      `
+    })
+    propertyRef.current?.appendChild(propertyTable)
 
-    // load ifc-file using absolute path
-    // const file = await fetch("/src/resource/small.ifc")
-    // const buffer = await file.arrayBuffer()
-    // const typedArray = new Uint8Array(buffer)
-    // const model = await ifcLoader.load(typedArray)
-
+    //load model
     const model = await ifcLoader.load(project.ifc_data)
     world.scene.three.add(model)
   }
@@ -185,19 +205,14 @@ export default function IFCPage(props: Props) {
       {/******** Page Body ********/}
       <div style={{display: 'flex', width: '100%', height: '90%', justifyContent: 'space-between'}}>
         {/******** Page Body Left ********/}
-          <Panel label='Classification'>
-            <PanelSection label='Tree'>
-              <div id="table_container" style={{overflowY:'scroll'}} ></div>
-            </PanelSection>
-            <PanelSection label='button'>
-              <Button vertical label="Todo List" click={() => goBack()} icon="ic:outline-list" />
+          <Panel style={{minWidth: '15%'}}>
+            <PanelSection label='Classification Tree'>
+              <div id="tree_container" ref={treeRef} ></div>
             </PanelSection>
           </Panel>
-          
         {/******** Page Body Center********/}
         <div>
           <Resizable
-            defaultSize={{width: '1200px', height: '700px'}}
             enable={{
               top: false,
               topLeft: false,
@@ -209,15 +224,15 @@ export default function IFCPage(props: Props) {
               bottomRight: true
             }}
           >
-            <div id="ifc_viewer" ref={ref}></div>
+            <div id="ifc_viewer" ref={viewerRef}></div>
           </Resizable>
           {/******** Page Bottom ********/}
-      <Button label="test-bottom section"/>
+          <Button label="test-bottom section"/>
         </div>
         {/******** Page Right ********/}
-          <Panel label='Right Panel' style={{minWidth: '10rem'}}>
+          <Panel style={{minWidth: '15%'}}>
             <PanelSection label='Properties'>
-              <Button label="test-btn" />
+              <div id="properties_container" ref={propertyRef}></div>
             </PanelSection>
             <PanelSection label='Quantification'>
               <div id='test'></div>
