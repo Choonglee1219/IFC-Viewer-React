@@ -3,12 +3,24 @@ import * as OBC from "@thatopen/components"
 import * as OBF from "@thatopen/components-front"
 import * as CUI from "./tables/index"
 import * as WEBIFC from 'web-ifc'
-import React, { useEffect, useRef } from "react"
+import * as THREE from 'three'
+import React, { useEffect, useRef, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ProjectsManager } from "../../classes/ProjectsManager";
-import { createComponent } from '@lit/react';
 import { Resizable } from 're-resizable';
 import './ifc_page.css'
+import { ToDo, ToDoPriority } from "../../bim-components/TodoCreator"
+import {
+  Button,
+  Dropdown,
+  Label,
+  Panel,
+  PanelSection,
+  TextInput,
+  ToolBar,
+  ToolBarSection,
+  Option,
+} from "./lit-components"
 
 interface Props {
   projectsManager: ProjectsManager
@@ -17,24 +29,94 @@ interface Props {
 BUI.Manager.init()
 
 export default function IFCPage(props: Props) {
-  const navigate = useNavigate();
+
   //project info from props
   const routeParams = useParams<{ id: string }>()
   if (!routeParams.id) {return (<p>Project ID is needed to see this page</p>)}
   const project = props.projectsManager.getProject(routeParams.id)
   if (!project) {return (<p>The project with ID {routeParams.id} wasn't found.</p>)}
 
-  const goBack = () => {
-    navigate(-1)
-  }
-
+  //ref
   const viewerRef = useRef<HTMLElement>(null)
   const treeRef = useRef<HTMLElement>(null)
   const propertyRef = useRef<HTMLElement>(null)
 
+  //state
+  const [components, setComponents] = useState<OBC.Components>(new OBC.Components)
+  const [description, setDescription] = useState<string>("")
+  const [todoList, setTodoList] = useState<ToDo[]>([])
+  const [priority, setPriority] = useState<ToDoPriority>()
+
+  const navigate = useNavigate();
+
+  const goBack = () => {
+    navigate("/")
+  }
+
+  const loadIFC = () => {
+    if (!components) { return }
+    const ifcLoader = components.get(OBC.IfcLoader)
+    const fileOpener = document.createElement("input")
+    fileOpener.type = "file"
+    fileOpener.accept = ".ifc"
+    fileOpener.onchange = async () => {
+      if (fileOpener.files === null || fileOpener.files.length === 0) return
+      const file = fileOpener.files[0]
+      fileOpener.remove()
+      const buffer = await file.arrayBuffer()
+      const data = new Uint8Array(buffer)
+      const model = await ifcLoader.load(data)
+      model.name = file.name.replace(".ifc", "")
+    }
+    fileOpener.click()
+  }
+
+  const loadFrag = () => {
+    if(!components) { return }
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.frag'
+    const reader = new FileReader()
+    reader.addEventListener("load", async () => {
+      const binary = reader.result
+      if (!(binary instanceof ArrayBuffer)) { return }
+      const fragmentBinary = new Uint8Array(binary)
+      components.get(OBC.FragmentsManager).load(fragmentBinary)
+    })
+    input.addEventListener('change', () => {
+      const filesList = input.files
+      if (!filesList) { return }
+      reader.readAsArrayBuffer(filesList[0])
+    })
+    input.click()
+  }
+
+  const addTodo = (todo: ToDo) => {
+    setTodoList(todoList => [...todoList, todo])
+  }
+
+  const createTodo = () => {
+    if (!components) { return }
+    if (description == "") { alert("Please enter description"); return; }
+    if (!priority) { alert("Please select priority"); return; }
+    const highlighter = components.get(OBF.Highlighter)
+    
+    const todo:ToDo = {
+      description: description,
+      date: new Date(),
+      fragmentMap: highlighter.selection.select,
+      priority: priority,
+    }
+    addTodo(todo)
+  }
+
+  const focusFragment = (todo: ToDo) => {
+    const highlighter = components.get(OBF.Highlighter)
+    highlighter.highlightByID("select", todo.fragmentMap, true, true)
+  }
+
   //create ifc-viewer
   const createViewer = async () => {
-    const components = new OBC.Components()
     const viewport = viewerRef.current as HTMLElement
 
     //init
@@ -45,7 +127,7 @@ export default function IFCPage(props: Props) {
     world.scene = sceneComponent
     const rendererComponent = new OBC.SimpleRenderer(components, viewport)
     world.renderer = rendererComponent
-    const cameraComponent = new OBC.SimpleCamera(components)
+    const cameraComponent = new OBC.OrthoPerspectiveCamera(components)
     world.camera = cameraComponent
 
     //background grid
@@ -56,6 +138,9 @@ export default function IFCPage(props: Props) {
 
     //fragment highlighter
     const highlighter = components.get(OBF.Highlighter)
+    highlighter.add('low', new THREE.Color(89,188,89))
+    highlighter.add('normal', new THREE.Color(89,124,255))
+    highlighter.add('high', new THREE.Color(255,118,118))
     highlighter.setup({ world })
 
     //ifc loader
@@ -64,8 +149,7 @@ export default function IFCPage(props: Props) {
 
     //fragments loader
     const fragments = components.get(OBC.FragmentsManager)
-    const fragmentIfcLoader = components.get(OBC.IfcLoader)
-    await fragmentIfcLoader.setup();
+
     const excludedCats = [
       WEBIFC.IFCTENDONANCHOR,
       WEBIFC.IFCREINFORCINGBAR,
@@ -73,9 +157,9 @@ export default function IFCPage(props: Props) {
     ];
     
     for (const cat of excludedCats) {
-      fragmentIfcLoader.settings.excludedCategories.add(cat)
+      ifcLoader.settings.excludedCategories.add(cat)
     }
-    fragmentIfcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true
+    ifcLoader.settings.webIfc.COORDINATE_TO_ORIGIN = true
 
     //fragments manager
     const fragmentsManager = components.get(OBC.FragmentsManager)
@@ -97,7 +181,7 @@ export default function IFCPage(props: Props) {
     relationsTree.preserveStructureOnFilter = true
     const classTable = BUI.Component.create(() => {
       return BUI.html`
-      ${relationsTree}
+        ${relationsTree}
       `
     })
     treeRef.current?.appendChild(classTable)
@@ -106,21 +190,21 @@ export default function IFCPage(props: Props) {
     const [propertiesTable, updatePropertiesTable] = CUI.tables.elementProperties({
       components,
       fragmentIdMap: {},
-    });
+    })
     
-    propertiesTable.preserveStructureOnFilter = true;
-    propertiesTable.indentationInText = false;
+    propertiesTable.preserveStructureOnFilter = true
+    propertiesTable.indentationInText = false
     
     highlighter.events.select.onHighlight.add((fragmentIdMap) => {
-      updatePropertiesTable({ fragmentIdMap });
-    });
+      updatePropertiesTable({ fragmentIdMap })
+    })
     
     highlighter.events.select.onClear.add(() =>
       updatePropertiesTable({ fragmentIdMap: {} }),
-    );
+    )
     const propertyTable = BUI.Component.create(() => {
       return BUI.html`
-      ${propertiesTable}
+        ${propertiesTable}
       `
     })
     propertyRef.current?.appendChild(propertyTable)
@@ -130,55 +214,10 @@ export default function IFCPage(props: Props) {
     world.scene.three.add(model)
   }
 
-  //BUI, from lit class to react component
-  const Button = createComponent({
-    react: React,
-    tagName: 'bim-button',
-    elementClass: BUI.Button,
-    events: {
-      click: 'click'
-    }
-  })
-  const Label = createComponent({
-    react: React,
-    tagName: 'bim-label',
-    elementClass: BUI.Label
-  })
-  const Tabs = createComponent({
-    react: React,
-    tagName: 'bim-tabs',
-    elementClass: BUI.Tabs
-  })
-  const Tab = createComponent({
-    react: React,
-    tagName: 'bim-tab',
-    elementClass: BUI.Tab
-  })
-  const ToolBar = createComponent({
-    react: React,
-    tagName: 'bim-toolbar',
-    elementClass: BUI.Toolbar
-  })
-  const ToolBarSection = createComponent({
-    react: React,
-    tagName: 'bim-toolbar-section',
-    elementClass: BUI.ToolbarSection
-  })
-  const Panel = createComponent({
-    react: React,
-    tagName: 'bim-panel',
-    elementClass: BUI.Panel
-  })
-  const PanelSection = createComponent({
-    react: React,
-    tagName: 'bim-panel-section',
-    elementClass: BUI.PanelSection
-  })
-  
   useEffect(() => {
     createViewer()
     return () => {
-      
+      components.dispose()
     }
   }, [])
 
@@ -194,25 +233,24 @@ export default function IFCPage(props: Props) {
         </ToolBar>
         <ToolBar>
           <ToolBarSection>
-            <Button vertical label="Load IFC" click={() => goBack()} icon="mage:box-3d-fill" />
-            <Button vertical label="Load FRAG" click={() => goBack()} icon="ic:sharp-upload" />
-            <Button vertical label="Model List" click={() => goBack()} icon="ic:outline-list" />
-            <Button vertical label="Create Todo" click={() => goBack()} icon="ic:baseline-create" />
-            <Button vertical label="Todo List" click={() => goBack()} icon="ic:outline-list" />
+            <Button vertical label="Load IFC" click={() => loadIFC()} icon="mage:box-3d-fill" />
+            <Button vertical label="Load FRAG" click={() => loadFrag()} icon="ic:sharp-upload" />
+            <Button vertical label="Model List" icon="ic:outline-list" />
           </ToolBarSection>
         </ToolBar>
       </div>
       {/******** Page Body ********/}
       <div style={{display: 'flex', width: '100%', height: '90%', justifyContent: 'space-between'}}>
         {/******** Page Body Left ********/}
-          <Panel style={{minWidth: '15%'}}>
-            <PanelSection label='Classification Tree'>
-              <div id="tree_container" ref={treeRef} ></div>
+          <Panel style={{minWidth: '15vw'}}>
+            <PanelSection label='Classification Tree' ref={treeRef}>
             </PanelSection>
           </Panel>
         {/******** Page Body Center********/}
         <div>
           <Resizable
+            defaultSize={{height:'80%', width:'70vw'}}
+            maxWidth={'70vw'}
             enable={{
               top: false,
               topLeft: false,
@@ -227,15 +265,30 @@ export default function IFCPage(props: Props) {
             <div id="ifc_viewer" ref={viewerRef}></div>
           </Resizable>
           {/******** Page Bottom ********/}
-          <Button label="test-bottom section"/>
+          <Panel>
+            <PanelSection label="Model Queries">
+              {/* ^2.0에서 IfcPropertiesFinder 클래스가 제외되어 구현 못하는 기능 */}
+            </PanelSection>
+          </Panel>
         </div>
         {/******** Page Right ********/}
-          <Panel style={{minWidth: '15%'}}>
-            <PanelSection label='Properties'>
-              <div id="properties_container" ref={propertyRef}></div>
+          <Panel style={{minWidth: '15vw'}}>
+            <PanelSection label='Create Todo'>
+              <Label>Description</Label>
+              <TextInput input={(e) => {setDescription(e.target?.value)}}></TextInput>
+              <Dropdown label="Priority" change={(e) => setPriority(e.target?.value)}>
+                <Option label="Low"></Option>
+                <Option label="Normal"></Option>
+                <Option label="High"></Option>
+              </Dropdown>
+              <Button label="Create" click={() => createTodo()} icon="ic:baseline-create"></Button>
             </PanelSection>
-            <PanelSection label='Quantification'>
-              <div id='test'></div>
+            <PanelSection label="Todo List">
+              {todoList.map((todo, idx) => (
+                <Button label={todo.description} key={idx} click={() => focusFragment(todo)}></Button>
+              ))}
+            </PanelSection>
+            <PanelSection label='Properties' ref={propertyRef}>
             </PanelSection>
           </Panel>
       </div>
