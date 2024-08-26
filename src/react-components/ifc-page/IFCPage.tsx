@@ -115,6 +115,17 @@ export default function IFCPage(props: Props) {
     highlighter.highlightByID("select", todo.fragmentMap, true, true)
   }
 
+  const deleteTodo = (todo: ToDo) => {
+    if (confirm(`Do you want to delete todo '${todo.description}' ?`)) {
+      const updateToDoList = todoList.filter((item) => {
+        return(item.description!=todo.description)
+      })
+      setTodoList(updateToDoList)
+    } else {
+      return
+    }
+  }
+
   //create ifc-viewer
   const createViewer = async () => {
     const viewport = viewerRef.current as HTMLElement
@@ -285,7 +296,13 @@ export default function IFCPage(props: Props) {
             </PanelSection>
             <PanelSection label="Todo List">
               {todoList.map((todo, idx) => (
-                <Button label={todo.description} key={idx} click={() => focusFragment(todo)}></Button>
+                <div key={idx} className="todo_card_container">
+                  <Label>{todo.description}</Label>
+                  <div className="todo_btn">
+                    <Button tooltipTitle="Highlight" click={() => focusFragment(todo)} icon="material-symbols:eye-tracking-rounded"></Button>
+                    <Button tooltipTitle="Delete" click={() => deleteTodo(todo)} icon="material-symbols:delete-outline"></Button>
+                  </div>
+                </div>
               ))}
             </PanelSection>
             <PanelSection label='Properties' ref={propertyRef}>
