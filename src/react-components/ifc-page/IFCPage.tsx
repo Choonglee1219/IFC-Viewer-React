@@ -156,7 +156,11 @@ export default function IFCPage(props: Props) {
 
     //ifc loader
     const ifcLoader = components.get(OBC.IfcLoader)
-    await ifcLoader.setup()
+    ifcLoader.settings.wasm = {
+      path: "../../../node_modules/web-ifc/",
+      absolute: true
+    }
+    await ifcLoader.setup({ autoSetWasm: false })
 
     //fragments loader
     const fragments = components.get(OBC.FragmentsManager)
