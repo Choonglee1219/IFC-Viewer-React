@@ -242,15 +242,14 @@ export default function IFCPage(props: Props) {
       <div className="ifc_page_header">
         <ToolBar>
           <ToolBarSection>
-            <Button vertical label="" click={() => goBack()} icon="ic:sharp-arrow-back" />
+            <Button vertical label="back" click={() => goBack()} />
             <Label style={{margin: '0 2rem 0 2rem', color: 'white'}}>{project.name}</Label>
           </ToolBarSection>
         </ToolBar>
         <ToolBar>
           <ToolBarSection>
-            <Button vertical label="Load IFC" click={() => loadIFC()} icon="mage:box-3d-fill" />
-            <Button vertical label="Load FRAG" click={() => loadFrag()} icon="ic:sharp-upload" />
-            <Button vertical label="Model List" icon="ic:outline-list" />
+            <Button vertical label="Load IFC" click={() => loadIFC()} />
+            <Button vertical label="Load FRAG" click={() => loadFrag()} />
           </ToolBarSection>
         </ToolBar>
       </div>
@@ -296,15 +295,15 @@ export default function IFCPage(props: Props) {
                 <Option label="Normal"></Option>
                 <Option label="High"></Option>
               </Dropdown>
-              <Button label="Create" click={() => createTodo()} icon="ic:baseline-create"></Button>
+              <Button label="Create" click={() => createTodo()}></Button>
             </PanelSection>
             <PanelSection label="Todo List">
               {todoList.map((todo, idx) => (
                 <div key={idx} className="todo_card_container">
                   <Label>{todo.description}</Label>
                   <div className="todo_btn">
-                    <Button tooltipTitle="Highlight" click={() => focusFragment(todo)} icon="material-symbols:eye-tracking-rounded"></Button>
-                    <Button tooltipTitle="Delete" click={() => deleteTodo(todo)} icon="material-symbols:delete-outline"></Button>
+                    <Button tooltipTitle="Highlight" click={() => focusFragment(todo)} label="tracking"></Button>
+                    <Button tooltipTitle="Delete" click={() => deleteTodo(todo)} label="delete"></Button>
                   </div>
                 </div>
               ))}
