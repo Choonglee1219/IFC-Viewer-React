@@ -3,7 +3,7 @@ import { IProject, Project } from "./Project"
 //TODO 삭제예정
 //sample ifc file load
 //이후 데이터베이스에서 받아오는 방식으로 변경 필요
-const file = await fetch("src/resource/NAV-IPI-ET1_E07-ZZZ-M3D-EST.ifc");
+const file = await fetch("src/resource/small.ifc");
 const buffer = await file.arrayBuffer();
 const project1_data = new Uint8Array(buffer);
 

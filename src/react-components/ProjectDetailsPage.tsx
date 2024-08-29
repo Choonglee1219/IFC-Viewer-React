@@ -8,6 +8,7 @@ import { useState } from "react"
 import { ToDo, TodoCreator, ToDoPriority } from "../bim-components/TodoCreator"
 import { TodoCard } from "../bim-components/TodoCreator/src/TodoCard"
 
+//현재는 사용하지 않는 페이지
 interface Props {
   projectsManager: ProjectsManager
 }

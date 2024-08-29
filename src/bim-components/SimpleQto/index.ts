@@ -2,6 +2,8 @@ import * as OBC from "openbim-components"
 import * as WEBIFC from "web-ifc"
 import { FragmentsGroup } from "bim-fragment"
 
+//구버전에서 이용한 QTO ^2.0에서 OBC.IfcPropertiesProcessor 클래스가 제외되어 사용 못함
+
 type QtoResult = { [setName: string]: { [qtoName: string]: number } }
 /*
 const QtoResultExample: QtoResult = {
